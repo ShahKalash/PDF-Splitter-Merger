@@ -55,10 +55,7 @@ async function mergePdfPages(files, selectedPages) {
   }
 
   const pdfBytes = await mergedPdf.save();
-  const outputPath = `output/merged-${Date.now()}.pdf`;
-
-  fs.writeFileSync(outputPath, pdfBytes);
-  return outputPath;
+  return pdfBytes;
 }
 
 // Route to render index.ejs
@@ -80,8 +77,10 @@ app.post("/upload", upload.array("pdfFiles"), async (req, res) => {
       return res.status(400).json({ error: "Invalid selectedPages format." });
     }
 
-    const mergedPdfPath = await mergePdfPages(req.files, selectedPages);
-    res.json({ downloadUrl: `/download/${path.basename(mergedPdfPath)}` });
+    const mergedPdfBytes = await mergePdfPages(req.files, selectedPages);
+    const base64Pdf = Buffer.from(mergedPdfBytes).toString('base64');
+
+    res.json({ base64Pdf });
   } catch (error) {
     console.error("Error merging PDFs:", error);
     res.status(500).json({ error: error.message || "Failed to merge PDFs." });
@@ -89,23 +88,6 @@ app.post("/upload", upload.array("pdfFiles"), async (req, res) => {
     req.files.forEach(file => fs.unlinkSync(file.path));
   }
 });
-
-// Route to serve merged PDF downloads
-app.get("/download/:fileName", (req, res) => {
-  const filePath = path.join(__dirname, "output", req.params.fileName);
-  res.download(filePath, (err) => {
-    if (err) {
-      console.error("Error sending file:", err);
-      res.status(500).send("Error downloading file.");
-    } else {
-      fs.unlinkSync(filePath); // Clean up merged file after download
-    }
-  });
-});
-
-// Ensure required directories exist
-fs.mkdirSync("uploads", { recursive: true });
-fs.mkdirSync("output", { recursive: true });
 
 app.listen(port, () => {
   console.log(`PDF Merger backend running at http://localhost:${port}`);

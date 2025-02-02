@@ -27,7 +27,9 @@
         </form>
 
         <div id="result" class="mt-6 hidden">
-            <a id="downloadLink" href="#" class="text-blue-500 underline">Download Merged PDF</a>
+            <h2 class="text-xl font-semibold mb-2">Preview:</h2>
+            <iframe id="previewFrame" class="w-full h-64 border" frameborder="0"></iframe>
+            <a id="downloadLink" href="#" class="text-blue-500 underline mt-2 inline-block">Download Merged PDF</a>
         </div>
     </div>
 
@@ -99,7 +101,14 @@
                 if (!response.ok) throw new Error("Failed to merge PDFs.");
 
                 const data = await response.json();
-                document.getElementById("downloadLink").href = data.downloadUrl;
+                const base64Pdf = data.base64Pdf;
+                const blob = new Blob([Uint8Array.from(atob(base64Pdf), c => c.charCodeAt(0))], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                document.getElementById("previewFrame").src = url;
+                document.getElementById("downloadLink").href = url;
+                document.getElementById("downloadLink").download = "merged.pdf";
+
                 document.getElementById("result").classList.remove("hidden");
             } catch (error) {
                 alert("An error occurred: " + error.message);
