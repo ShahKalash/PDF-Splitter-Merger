@@ -69,9 +69,13 @@ document.getElementById("upload-form").addEventListener("submit", async (e) => {
         const blob = new Blob([Uint8Array.from(atob(base64Pdf), c => c.charCodeAt(0))], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
 
-        document.getElementById("previewFrame").src = url;
-        document.getElementById("downloadLink").href = url;
-        document.getElementById("downloadLink").download = "merged.pdf";
+        // Open the merged PDF in a new tab
+        window.open(url, "_blank").focus();
+
+        // Optional download link update
+        const downloadLink = document.getElementById("downloadLink");
+        downloadLink.href = url;
+        downloadLink.download = "merged.pdf";
 
         document.getElementById("result").classList.remove("hidden");
     } catch (error) {
